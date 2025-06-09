@@ -23,6 +23,7 @@ return new class extends Migration
             $table->enum('booking_status', [
                 'pending', 'confirmed', 'cancelled', 'completed'
             ])->default('pending');
+            $table->string('validation_response')->nullable();
             $table->decimal('total_price', 12, 2);
             $table->string('currency', 3)->default('USD');
             $table->string('contact_email')->nullable();
