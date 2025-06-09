@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Models\Bookings;
 use App\Services\KafkaProducer;
 use Illuminate\Contracts\Events\ShouldHandleEventsAfterCommit;
+use App\Models\Topics;
 
 class BookingObserver implements ShouldHandleEventsAfterCommit
 {
@@ -13,6 +14,12 @@ class BookingObserver implements ShouldHandleEventsAfterCommit
      */
     public function created(Bookings $booking): void
     {
-        app(KafkaProducer::class)->send($booking->toArray());
+        $data = $booking->toArray();
+        app(KafkaProducer::class)->send($data);
+
+        Topics::query()->create([
+            'booking_id' => $booking->id,
+            'sent_message' => json_encode($data)
+        ]);
     }
 }

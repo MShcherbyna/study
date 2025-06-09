@@ -24,6 +24,7 @@ services:
         depends_on:
             - mysql
             - mongodb
+            - redis
     mysql:
         image: 'mysql/mysql-server:8.0'
         ports:
@@ -68,22 +69,21 @@ services:
             retries: 3
             timeout: 5s
     zookeeper:
-        image: wurstmeister/zookeeper:3.4.6
+        image: 'wurstmeister/zookeeper:3.4.6'
         ports:
-            - "2181:2181"
+            - '2181:2181'
         networks:
             - sail
-
     kafka:
-        image: wurstmeister/kafka:2.12-2.2.1
+        image: 'wurstmeister/kafka:2.12-2.2.1'
         ports:
-            - "9092:9092"
-            - "9093:9093"
+            - '9092:9092'
+            - '9093:9093'
         environment:
-            KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-            KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9093
-            KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:9093
-            KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+            KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+            KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9093'
+            KAFKA_LISTENERS: 'PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:9093'
+            KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
             KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
             KAFKA_BROKER_ID: 1
             KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
@@ -91,18 +91,32 @@ services:
             - zookeeper
         networks:
             - sail
-
     kafka-ui:
-        image: provectuslabs/kafka-ui:latest
+        image: 'provectuslabs/kafka-ui:latest'
         ports:
-            - "8081:8080"
+            - '8081:8080'
         environment:
             - KAFKA_CLUSTERS_0_NAME=local
-            - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+            - 'KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092'
         networks:
             - sail
         depends_on:
             - kafka
+    redis:
+        image: 'redis:alpine'
+        ports:
+            - '${FORWARD_REDIS_PORT:-6379}:6379'
+        volumes:
+            - 'sail-redis:/data'
+        networks:
+            - sail
+        healthcheck:
+            test:
+                - CMD
+                - redis-cli
+                - ping
+            retries: 3
+            timeout: 5s
 networks:
     sail:
         driver: bridge
@@ -110,4 +124,6 @@ volumes:
     sail-mysql:
         driver: local
     sail-mongodb:
+        driver: local
+    sail-redis:
         driver: local
